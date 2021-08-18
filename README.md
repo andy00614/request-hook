@@ -1,29 +1,15 @@
-# composition-request
+# TODO
+## 1.要实现的功能
+- 默认请求及手动请求 p0
+- 轮询及取消 p0
+- 防抖节流 p0
+- 分页 p0
+- SWR 调研 p1
 
-## Project setup
-```
-npm install
-```
+## 2.单元测试
+采用dom的形势
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+## 3.使用的文档
+和element类似的
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Run your unit tests
-```
-npm run test:unit
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## 4.打包
