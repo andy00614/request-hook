@@ -6,7 +6,7 @@ import debounce from 'lodash.debounce'
 import throttle from 'lodash.throttle'
 
 export default function useRequest<T extends unknown[], U>(
-  requestFn: (...params: T) => U,
+  requestFn: (...params: T) => Promise<U>,
   options?: Options,
 ) {
   const requestData = ref<U>();
