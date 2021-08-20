@@ -9,6 +9,7 @@ export default function useRequest<T extends unknown[], U>(
   requestFn: (...params: T) => Promise<U>,
   options?: Options,
 ) {
+  let requestList = [] //判断队列
   const requestData = ref<U>();
   const loading = ref(false);
   async function startRequest(...params: T) {
@@ -55,6 +56,20 @@ export default function useRequest<T extends unknown[], U>(
     options && options.onSuccess && options.onSuccess(data, null);
     return data;
   }
+  
+  /**就是把所有请求放进一个队列里，当队列的最后一个请求完成 页面取最后一个请求返回的数据 q*/
+/**/
+asyncfunctionlastData(...params: T) {
+    const res=await startRequest(...params);
+    requestList.push(res);
+    res.then(result=> {
+    if(res == requestList[requestList.length-1]) {
+        requestData.value = result
+        requestList = []
+        return res
+    }
+    })
+}
 
   function runFactory() {
     if (options?.debounceInterval) {
