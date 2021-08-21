@@ -1,4 +1,4 @@
-import { computed, reactive, Ref, ref, toRefs } from '@vue/composition-api';
+import { computed, reactive, Ref, ref, watch } from '@vue/composition-api';
 import { PaginationResult, Params, Request, requestFactor } from './type';
 import debounce from 'lodash.debounce'
 import throttle from 'lodash.throttle'
@@ -12,7 +12,7 @@ export default function useRequest<T extends unknown[], U>(request: Request<T, U
     const pagination = reactive({
         total: 0,
         currentPage: 1,
-        pageSize: 10,
+        pageSize: options.defaultPageSize ?? 10,
         pageCount: 0,
     })
 
@@ -33,6 +33,14 @@ export default function useRequest<T extends unknown[], U>(request: Request<T, U
     const cancelRequest = () => {
         setCancelRequestFlag(true)
         loading.value = false
+    }
+
+    function paginationRequestHoc<T extends unknown[],U>(request: (...arr: T) => Promise<U>) {
+        if(options.paginated) {
+            // @ts-ignore
+            return () => request(pagination.currentPage,pagination.pageSize)
+        }
+        return request
     }
 
     // 这个应该是个单例，否则连续执行run会出问题
@@ -99,29 +107,34 @@ export default function useRequest<T extends unknown[], U>(request: Request<T, U
         }
     }
 
-    const { run, cancel } = requestFactor<T, U>(baseRequest,options)
+    const { run, cancel } = requestFactor<T, U>(paginationRequestHoc(baseRequest),options)
 
     const currentChange = async (current: number) => {
         pagination.currentPage = current
         // TODO: 这里的类型适配
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         // TODO: 这里的入参有没有必要改成对象形式，那U的类型要改
-        await run(current,pagination.pageSize) as PaginationResult
+        await run(pagination.currentPage,pagination.pageSize) as PaginationResult
     }
 
-    const sizeChange = (size: number) => {
-        pagination.pageSize = size;
-        resetPaginationCurrent()
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    const sizeChange = async (size: number) => {
         // @ts-ignore
-        run(current,pagination.pageSize) as PaginationResult
+        await run(pagination.currentPage,pagination.pageSize) as PaginationResult
+        pagination.pageSize = size;
+        // TODO: 在配置了消抖的情况下放在这里不合适。应该放在请求之后，有结果了再reset
+        resetPaginationCurrent()
     }
 
     if(!options.manaul) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         run()
+    }
+
+    if(options.refreshDeps) {
+        options.refreshDeps.forEach(dep => {
+            // @ts-ignore
+            watch(dep,() => sizeChange(options.defaultPageSize ?? 10),{deep: true})
+        })
     }
 
     const paginationForElementUi = computed(() => ({

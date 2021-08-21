@@ -1,5 +1,6 @@
 <template>
   <div class="hello">
+      <input type="text" v-model="inputValue">
      <el-pagination
         :page-sizes="[10, 20, 50]"
         layout="sizes, prev, pager, next"
@@ -13,7 +14,7 @@
 
 <script lang="ts">
   import useRequest from "@/hooks/use-request/duplicated";
-import { defineComponent } from "@vue/composition-api";
+import { defineComponent, ref } from "@vue/composition-api";
   import { Pagination } from 'element-ui'
 
   const mockRequest = (params:any) => {
@@ -36,7 +37,7 @@ import { defineComponent } from "@vue/composition-api";
                 //   },
                 //   message:'success'
               }
-              console.log('result',result)
+              console.log('result',result,params)
               resolve(result)
           }, 200);
       })
@@ -52,15 +53,18 @@ import { defineComponent } from "@vue/composition-api";
       msg: String,
     },
     setup() {
+        const inputValue = ref('')
         const request = (current:any,pageSize:any) => mockRequest(
             {
                 currentPage: current,
                 pageSize: pageSize,
-                count:200
+                count:200,
             }
         )
         const {data,pagination,paginationEvent} = useRequest(request,{
-            paginated: true
+            paginated: true,
+            refreshDeps: [inputValue],
+            debounceInterval:200
         })
         const handleOnCurrentChange = (...arr:any) => {
             console.log('handleOnCurrentChange',arr);
@@ -73,7 +77,8 @@ import { defineComponent } from "@vue/composition-api";
             handleOnSizeChange,
             data,
             pagination,
-            paginationEvent
+            paginationEvent,
+            inputValue
         }
     },
   });

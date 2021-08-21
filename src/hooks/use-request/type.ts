@@ -27,7 +27,7 @@ export interface Params {
   throttleInterval?: number,
   paginated?: boolean;
   defaultPageSize?: number;
-  refreshDeps?: any[]
+  refreshDeps?: Ref<any>[];
 }
 
 export interface requestFactor<T extends unknown [],U> {
