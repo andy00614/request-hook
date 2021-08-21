@@ -1,6 +1,5 @@
 import { Ref, ref } from '@vue/composition-api';
-import { Options, Params, Request, requestFactor } from './type';
-import { isOnCurPage } from './utils';
+import { Params, Request, requestFactor } from './type';
 import debounce from 'lodash.debounce'
 import throttle from 'lodash.throttle'
 
