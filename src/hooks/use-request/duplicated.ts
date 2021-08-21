@@ -1,18 +1,33 @@
-import { Ref, ref } from '@vue/composition-api';
-import { Params, Request, requestFactor } from './type';
+import { computed, reactive, Ref, ref, toRefs } from '@vue/composition-api';
+import { PaginationResult, Params, Request, requestFactor } from './type';
 import debounce from 'lodash.debounce'
 import throttle from 'lodash.throttle'
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export default function useRequest<T extends unknown[], U>(request: Request<T, U>, params: Params) {
-    const data = ref<U>(params.initialData) as Ref<U>
+export default function useRequest<T extends unknown[], U>(request: Request<T, U>, options: Params={}) {
+    const data = ref<U>(options.initialData) as Ref<U>
     const loading = ref(false)
     const cancelRequestFlag = ref(false)
+    const pagination = reactive({
+        total: 0,
+        currentPage: 1,
+        pageSize: 10,
+        pageCount: 0,
+    })
+
     let requestIndex = 0;
 
     const setCancelRequestFlag = (val: boolean) => {
         cancelRequestFlag.value = val
+    }
+
+    const setPaginationTotal = (total:number) => {
+        pagination.total = total
+    }
+
+    const resetPaginationCurrent = () => {
+        pagination.currentPage = 1
     }
 
     const cancelRequest = () => {
@@ -51,6 +66,10 @@ export default function useRequest<T extends unknown[], U>(request: Request<T, U
         const res = await request(...params)
         if(requestIndex === curRequestIndex || cancelRequestFlag.value) {
             data.value = res
+            if(options.paginated) {
+                const total = (data.value as unknown as PaginationResult).total
+                setPaginationTotal(total)
+            }
         }
         loading.value = false
         return data.value
@@ -80,20 +99,47 @@ export default function useRequest<T extends unknown[], U>(request: Request<T, U
         }
     }
 
-    const { run, cancel } = requestFactor<T, U>(baseRequest,params)
+    const { run, cancel } = requestFactor<T, U>(baseRequest,options)
 
-    if(!params.manaul) {
+    const currentChange = async (current: number) => {
+        pagination.currentPage = current
+        // TODO: 这里的类型适配
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        // TODO: 这里的入参有没有必要改成对象形式，那U的类型要改
+        await run(current,pagination.pageSize) as PaginationResult
+    }
+
+    const sizeChange = (size: number) => {
+        pagination.pageSize = size;
+        resetPaginationCurrent()
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        run(current,pagination.pageSize) as PaginationResult
+    }
+
+    if(!options.manaul) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         run()
     }
 
-    
+    const paginationForElementUi = computed(() => ({
+        total: pagination.total,
+        'current-page': pagination.currentPage,
+        'page-size': pagination.pageSize,
+        'page-count': pagination.pageCount,
+    }))
 
     return {
         data,
         loading,
         run,
-        cancel
+        cancel,
+        pagination: paginationForElementUi,
+        paginationEvent: {
+            'current-change': currentChange,
+            'size-change': sizeChange
+        },
     }
 }

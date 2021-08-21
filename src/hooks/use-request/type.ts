@@ -25,9 +25,21 @@ export interface Params {
   pollingInterval?: number,
   debounceInterval?: number,
   throttleInterval?: number,
+  paginated?: boolean;
+  defaultPageSize?: number;
+  refreshDeps?: any[]
 }
 
 export interface requestFactor<T extends unknown [],U> {
   run: (...arr: T) => Promise<U>,
   cancel: () => void
+}
+
+export interface PaginationResult {
+  currentPage: number;
+  total: number;
+  list: [{
+    [key:string]: any;
+  }]
+  pageSize: number
 }
