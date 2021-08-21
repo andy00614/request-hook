@@ -22,9 +22,12 @@ export interface Params {
   // 可以看下ahooks是否支持
   initialData?: any;
   manaul?: boolean;
-  pollingInterval?: number
+  pollingInterval?: number,
+  debounceInterval?: number,
+  throttleInterval?: number,
 }
 
-export interface requestFactor {
-  start: () => 
+export interface requestFactor<T extends unknown [],U> {
+  run: (...arr: T) => Promise<U>,
+  cancel: () => void
 }

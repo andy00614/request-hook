@@ -1,9 +1,9 @@
-function mockRequest<T>(body:T): Promise<T>{
+function mockRequest<T>(body:T,time = 200): Promise<T>{
     return new Promise((resolve) => {
         setTimeout(() => {
-            console.log('qingqiu');
+            console.log('mockRequest exec');
             resolve(body)
-        }, 2000);
+        }, time);
     })
 }
 export { mockRequest }
